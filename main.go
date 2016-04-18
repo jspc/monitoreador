@@ -55,8 +55,8 @@ var mode string
 var panicGuide string
 
 func init(){
-    flag.StringVar(&config, "file", "/etc/monitoreador.ini", "Config file for monitoreador")
-    flag.StringVar(&config, "f", "/etc/monitoreador.ini", "Config file for monitoreador (Shorthand)")
+    flag.StringVar(&config, "file", "/etc/monitoreador/config.ini", "Config file for monitoreador")
+    flag.StringVar(&config, "f", "/etc/monitoreador/config.ini", "Config file for monitoreador (Shorthand)")
 
     flag.StringVar(&mode, "mode", "default", "Mode from config file to use")
     flag.StringVar(&mode, "m", "default", "Mode from config file to use (Shorthand)")
