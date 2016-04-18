@@ -2,13 +2,13 @@ package main
 
 import (
     "bytes"
-    "code.google.com/p/gcfg"
     "encoding/json"
     "flag"
     "fmt"
     "github.com/guillermo/go.procmeminfo"
     "github.com/zenazn/goji"
     "github.com/zenazn/goji/web"
+    "gopkg.in/gcfg.v1"
     "io/ioutil"
     "log"
     "net/http"
