@@ -1,36 +1,24 @@
 package main
 
 import (
-    //    "encoding/binary"
-    "github.com/guillermo/go.procmeminfo"
     "bytes"
-    "regexp"
     "code.google.com/p/gcfg"
-    "strconv"
     "encoding/json"
     "flag"
     "fmt"
-    "log"
-//    "net"
-    "os"
-//    "os/exec"
-    "os/signal"
-//    "path/filepath"
-//    "strings"
-    "syscall"
-       "time"
-    "io/ioutil"
+    "github.com/guillermo/go.procmeminfo"
     "github.com/zenazn/goji"
     "github.com/zenazn/goji/web"
+    "io/ioutil"
+    "log"
     "net/http"
+    "os"
+    "os/signal"
+    "regexp"
+    "strconv"
+    "syscall"
+    "time"
 )
-
-
-var config string
-var mode string
-var hostname string
-var err error
-var panicGuide string
 
 type Modes struct {
     Mode map[string]*struct {
@@ -47,7 +35,6 @@ type HealthCheck struct {
     Description string
     Checks []Metric
 }
-var healthcheck HealthCheck
 
 type Metric struct {
     Id int
@@ -60,12 +47,19 @@ type Metric struct {
     LastUpdated string
 }
 
+var config string
+var err error
+var healthcheck HealthCheck
+var hostname string
+var mode string
+var panicGuide string
+
 func init(){
-    flag.StringVar(&config, "file", "/etc/touter.ini", "Config file for touter")
-    flag.StringVar(&config, "f", "/etc/touter.ini", "Config file for touter (Shorthand)")
+    flag.StringVar(&config, "file", "/etc/monitoreador.ini", "Config file for monitoreador")
+    flag.StringVar(&config, "f", "/etc/monitoreador.ini", "Config file for monitoreador (Shorthand)")
 
     flag.StringVar(&mode, "mode", "default", "Mode from config file to use")
-    flag.StringVar(&mode, "pr", "default", "Mode from config file to use (Shorthand)")
+    flag.StringVar(&mode, "m", "default", "Mode from config file to use (Shorthand)")
 }
 
 func LoadConfig(){
