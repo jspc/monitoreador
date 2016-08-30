@@ -18,22 +18,22 @@ import (
 )
 
 type HealthCheck struct {
-    SchemaVersion int     `json: "schemaVersion"`
-    SystemCode string     `json: "systemCode"`
-    Name string           `json: "name"`
-    Description string    `json: "description"`
-    Checks []Metric       `json: "checks"`
+    SchemaVersion int     `json:"schemaVersion"`
+    SystemCode string     `json:"systemCode"`
+    Name string           `json:"name"`
+    Description string    `json:"description"`
+    Checks []Metric       `json:"checks"`
 }
 
 type Metric struct {
-    Id int                `json: "id"`
-    Name string           `json: "name"`
-    Ok bool               `json: "ok"`
-    Severity int          `json: "severity"`
-    BusinessImpact string `json: "businessImpact"`
-    PanicGuide string     `json: "panicGuide"`
-    CheckOutput string    `json: "checkOutput"`
-    LastUpdated string    `json: "lastUpdated"`
+    Id int                `json:"id"`
+    Name string           `json:"name"`
+    Ok bool               `json:"ok"`
+    Severity int          `json:"severity"`
+    BusinessImpact string `json:"businessImpact"`
+    PanicGuide string     `json:"panicGuide"`
+    CheckOutput string    `json:"checkOutput"`
+    LastUpdated string    `json:"lastUpdated"`
 }
 
 var config string
@@ -42,8 +42,15 @@ var healthcheck HealthCheck
 var hostname string
 var panicGuide string
 
+var controlDir string
+
 func LoadConfig(){
     panicGuide = os.Getenv("SYSTEM_GUIDE")
+
+    controlDir = os.Getenv("CONTROL_DIR")
+    if len(controlDir) == 0 {
+        controlDir = "/"
+    }
 
     healthcheck.SchemaVersion = 1
     healthcheck.SystemCode = os.Getenv("SYSTEM_CODE")
@@ -52,6 +59,8 @@ func LoadConfig(){
 }
 
 func BuildHealthcheck(w http.ResponseWriter, r *http.Request){
+    LogRequest(r)
+
     var metrics []Metric
     metrics = append(metrics, LoadAvg())
     metrics = append(metrics, Memory())
@@ -65,6 +74,13 @@ func BuildHealthcheck(w http.ResponseWriter, r *http.Request){
     }
 
     fmt.Fprintf(w, string(j))
+}
+
+func LogRequest(r *http.Request) {
+    log.Printf( "%s :: %s %s",
+        r.RemoteAddr,
+        r.Method,
+        r.URL.Path)
 }
 
 func LoadAvg() Metric{
@@ -150,15 +166,14 @@ func DiskUsage() Metric{
     l.Ok = true
 
     var stat syscall.Statfs_t
-    wd,_ := os.Getwd()
-
-    syscall.Statfs(wd, &stat)
+    syscall.Statfs(controlDir, &stat)
 
     // Available blocks * size per block = available space in bytes
     available := stat.Bavail * uint64(stat.Bsize)
+
     var output bytes.Buffer
     if available < (1024*1024*1024) {
-        output.WriteString(fmt.Sprintf("%d mb free on disk", available*1024*1024))
+        output.WriteString(fmt.Sprintf("%d mb free on disk", available/1024/1024))
         l.Ok = false
     }
 
