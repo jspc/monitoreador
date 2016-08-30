@@ -6,9 +6,6 @@ import (
     "flag"
     "fmt"
     "github.com/guillermo/go.procmeminfo"
-    "github.com/zenazn/goji"
-    "github.com/zenazn/goji/web"
-    "gopkg.in/gcfg.v1"
     "io/ioutil"
     "log"
     "net/http"
@@ -20,69 +17,50 @@ import (
     "time"
 )
 
-type Modes struct {
-    Mode map[string]*struct {
-        SystemCode string
-        ApplicationName string
-        PanicGuide string
-    }
-}
-
 type HealthCheck struct {
-    SchemaVersion int
-    SystemCode string
-    Name string
-    Description string
-    Checks []Metric
+    SchemaVersion int     `json:"schemaVersion"`
+    SystemCode string     `json:"systemCode"`
+    Name string           `json:"name"`
+    Description string    `json:"description"`
+    Checks []Metric       `json:"checks"`
 }
 
 type Metric struct {
-    Id int
-    Name string
-    Ok bool
-    Severity int
-    BusinessImpact string
-    PanicGuide string
-    CheckOutput string
-    LastUpdated string
+    Id int                `json:"id"`
+    Name string           `json:"name"`
+    Ok bool               `json:"ok"`
+    Severity int          `json:"severity"`
+    BusinessImpact string `json:"businessImpact"`
+    PanicGuide string     `json:"panicGuide"`
+    CheckOutput string    `json:"checkOutput"`
+    LastUpdated string    `json:"lastUpdated"`
 }
 
 var config string
 var err error
 var healthcheck HealthCheck
 var hostname string
-var mode string
 var panicGuide string
 
-func init(){
-    flag.StringVar(&config, "file", "/etc/monitoreador/config.ini", "Config file for monitoreador")
-    flag.StringVar(&config, "f", "/etc/monitoreador/config.ini", "Config file for monitoreador (Shorthand)")
-
-    flag.StringVar(&mode, "mode", "default", "Mode from config file to use")
-    flag.StringVar(&mode, "m", "default", "Mode from config file to use (Shorthand)")
-}
+var controlDir string
 
 func LoadConfig(){
-    var m Modes
-    err := gcfg.ReadFileInto(&m, config)
-    if err != nil {
-        log.Fatalf("Failed to parse gcfg data: %s", err)
+    panicGuide = os.Getenv("SYSTEM_GUIDE")
+
+    controlDir = os.Getenv("CONTROL_DIR")
+    if len(controlDir) == 0 {
+        controlDir = "/"
     }
 
-    modeObj := m.Mode[mode]
-    log.Printf("Loading configuration")
-    log.Printf("Monitoring for: %s, '%s'", mode, modeObj.ApplicationName)
-    log.Printf("PCode: %s\n", modeObj.SystemCode)
-
-    panicGuide = modeObj.PanicGuide
-
     healthcheck.SchemaVersion = 1
-    healthcheck.SystemCode = modeObj.SystemCode
-    healthcheck.Name = modeObj.ApplicationName
-    healthcheck.Description = modeObj.ApplicationName // HAHAHAHA FUCK YOU EVERYBODY
+    healthcheck.SystemCode = os.Getenv("SYSTEM_CODE")
+    healthcheck.Name = os.Getenv("SYSTEM_NAME")
+    healthcheck.Description = os.Getenv("SYSTEM_DESCRIPTION")
 }
 
-func BuildHealthcheck(c web.C, w http.ResponseWriter, r *http.Request){
+func BuildHealthcheck(w http.ResponseWriter, r *http.Request){
+    LogRequest(r)
+
     var metrics []Metric
     metrics = append(metrics, LoadAvg())
     metrics = append(metrics, Memory())
@@ -96,6 +74,13 @@ func BuildHealthcheck(c web.C, w http.ResponseWriter, r *http.Request){
     }
 
     fmt.Fprintf(w, string(j))
+}
+
+func LogRequest(r *http.Request) {
+    log.Printf( "%s :: %s %s",
+        r.RemoteAddr,
+        r.Method,
+        r.URL.Path)
 }
 
 func LoadAvg() Metric{
@@ -181,15 +166,14 @@ func DiskUsage() Metric{
     l.Ok = true
 
     var stat syscall.Statfs_t
-    wd,_ := os.Getwd()
-
-    syscall.Statfs(wd, &stat)
+    syscall.Statfs(controlDir, &stat)
 
     // Available blocks * size per block = available space in bytes
     available := stat.Bavail * uint64(stat.Bsize)
+
     var output bytes.Buffer
     if available < (1024*1024*1024) {
-        output.WriteString(fmt.Sprintf("%d mb free on disk", available*1024*1024))
+        output.WriteString(fmt.Sprintf("%d mb free on disk", available/1024/1024))
         l.Ok = false
     }
 
@@ -233,6 +217,6 @@ func main(){
         }
     }()
 
-    goji.Get("/", BuildHealthcheck)
-    goji.Serve()
+    http.HandleFunc("/", BuildHealthcheck)
+    http.ListenAndServe(":8000", nil)
 }
