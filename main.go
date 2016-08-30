@@ -51,7 +51,7 @@ func LoadConfig(){
     healthcheck.Description = os.Getenv("SYSTEM_DESCRIPTION")
 }
 
-func BuildHealthcheck(c web.C, w http.ResponseWriter, r *http.Request){
+func BuildHealthcheck(w http.ResponseWriter, r *http.Request){
     var metrics []Metric
     metrics = append(metrics, LoadAvg())
     metrics = append(metrics, Memory())
@@ -202,6 +202,6 @@ func main(){
         }
     }()
 
-    goji.Get("/", BuildHealthcheck)
-    goji.Serve()
+    http.HandleFunc("/", BuildHealthcheck)
+    http.ListenAndServe(":8000", nil)
 }
