@@ -18,22 +18,22 @@ import (
 )
 
 type HealthCheck struct {
-    SchemaVersion int
-    SystemCode string
-    Name string
-    Description string
-    Checks []Metric
+    SchemaVersion int     `json: "schemaVersion"`
+    SystemCode string     `json: "systemCode"`
+    Name string           `json: "name"`
+    Description string    `json: "description"`
+    Checks []Metric       `json: "checks"`
 }
 
 type Metric struct {
-    Id int
-    Name string
-    Ok bool
-    Severity int
-    BusinessImpact string
-    PanicGuide string
-    CheckOutput string
-    LastUpdated string
+    Id int                `json: "id"`
+    Name string           `json: "name"`
+    Ok bool               `json: "ok"`
+    Severity int          `json: "severity"`
+    BusinessImpact string `json: "businessImpact"`
+    PanicGuide string     `json: "panicGuide"`
+    CheckOutput string    `json: "checkOutput"`
+    LastUpdated string    `json: "lastUpdated"`
 }
 
 var config string
