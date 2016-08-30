@@ -6,9 +6,6 @@ import (
     "flag"
     "fmt"
     "github.com/guillermo/go.procmeminfo"
-    "github.com/zenazn/goji"
-    "github.com/zenazn/goji/web"
-    "gopkg.in/gcfg.v1"
     "io/ioutil"
     "log"
     "net/http"
@@ -19,14 +16,6 @@ import (
     "syscall"
     "time"
 )
-
-type Modes struct {
-    Mode map[string]*struct {
-        SystemCode string
-        ApplicationName string
-        PanicGuide string
-    }
-}
 
 type HealthCheck struct {
     SchemaVersion int
@@ -51,35 +40,15 @@ var config string
 var err error
 var healthcheck HealthCheck
 var hostname string
-var mode string
 var panicGuide string
 
-func init(){
-    flag.StringVar(&config, "file", "/etc/monitoreador/config.ini", "Config file for monitoreador")
-    flag.StringVar(&config, "f", "/etc/monitoreador/config.ini", "Config file for monitoreador (Shorthand)")
-
-    flag.StringVar(&mode, "mode", "default", "Mode from config file to use")
-    flag.StringVar(&mode, "m", "default", "Mode from config file to use (Shorthand)")
-}
-
 func LoadConfig(){
-    var m Modes
-    err := gcfg.ReadFileInto(&m, config)
-    if err != nil {
-        log.Fatalf("Failed to parse gcfg data: %s", err)
-    }
-
-    modeObj := m.Mode[mode]
-    log.Printf("Loading configuration")
-    log.Printf("Monitoring for: %s, '%s'", mode, modeObj.ApplicationName)
-    log.Printf("PCode: %s\n", modeObj.SystemCode)
-
-    panicGuide = modeObj.PanicGuide
+    panicGuide = os.Getenv("SYSTEM_GUIDE")
 
     healthcheck.SchemaVersion = 1
-    healthcheck.SystemCode = modeObj.SystemCode
-    healthcheck.Name = modeObj.ApplicationName
-    healthcheck.Description = modeObj.ApplicationName // HAHAHAHA FUCK YOU EVERYBODY
+    healthcheck.SystemCode = os.Getenv("SYSTEM_CODE")
+    healthcheck.Name = os.Getenv("SYSTEM_NAME")
+    healthcheck.Description = os.Getenv("SYSTEM_DESCRIPTION")
 }
 
 func BuildHealthcheck(c web.C, w http.ResponseWriter, r *http.Request){
