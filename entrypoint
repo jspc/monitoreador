@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+set -e
+set -x
+set -a
+
+[ -f /.env ] && source /.env
+
+/main
