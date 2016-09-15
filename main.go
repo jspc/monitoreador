@@ -26,7 +26,7 @@ type HealthCheck struct {
 }
 
 type Metric struct {
-    Id int                `json:"id"`
+    Id string             `json:"id"`
     Name string           `json:"name"`
     Ok bool               `json:"ok"`
     Severity int          `json:"severity"`
@@ -73,6 +73,7 @@ func BuildHealthcheck(w http.ResponseWriter, r *http.Request){
         log.Fatalf("Could not marshal projects data: %s\n", err)
     }
 
+    w.Header().Set("Content-Type", "application/json")
     fmt.Fprintf(w, string(j))
 }
 
@@ -85,7 +86,7 @@ func LogRequest(r *http.Request) {
 
 func LoadAvg() Metric{
     var l Metric
-    l.Id = 1
+    l.Id = "1"
     l.Name = "Load Average"
     l.BusinessImpact = "A high load could lower the quality of the service"
     l.Severity = 2
@@ -132,7 +133,7 @@ func LoadAvg() Metric{
 
 func Memory() Metric{
     var l Metric
-    l.Id = 2
+    l.Id = "2"
     l.Name = "Memory Usage"
     l.BusinessImpact = "Running low on memory could cause the operating system to close important processes"
     l.Severity = 2
@@ -158,7 +159,7 @@ func Memory() Metric{
 
 func DiskUsage() Metric{
     var l Metric
-    l.Id = 3
+    l.Id = "3"
     l.Name = "Disk Usage"
     l.BusinessImpact = "Running low on disk space could cause assets to disappear"
     l.Severity = 2
