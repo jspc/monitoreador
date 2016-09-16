@@ -14,6 +14,11 @@ func BuildHealthcheck(w http.ResponseWriter, r *http.Request){
     metrics = append(metrics, LoadAvg())
     metrics = append(metrics, Memory())
     metrics = append(metrics, DiskUsage())
+    metrics = append(metrics, ConsulNode())
+
+    for _,s := range ConsulServices() {
+        metrics = append(metrics, s)
+    }
 
     healthcheck.Checks = metrics
 

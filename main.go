@@ -35,6 +35,8 @@ var hostname string
 var panicGuide string
 
 var controlDir string
+var checkNodeName string
+var consulAddress string
 
 func LoadConfig(){
     panicGuide = os.Getenv("SYSTEM_GUIDE")
@@ -42,6 +44,11 @@ func LoadConfig(){
     controlDir = os.Getenv("CONTROL_DIR")
     if len(controlDir) == 0 {
         controlDir = "/"
+    }
+
+    checkNodeName = os.Getenv("CONSUL_NODENAME")
+    if len(checkNodeName) == 0 {
+        checkNodeName,_ = os.Hostname()
     }
 
     healthcheck.SchemaVersion = 1
