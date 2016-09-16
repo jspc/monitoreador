@@ -7,11 +7,11 @@ CONTAINER_TAG=quay.io/financialtimes/monitoreador:latest
 all: main
 
 main:
-	$(GOENV) go build $(GOARGS) -o main
+	$(GOENV) go build $(GOARGS)
 
 install: all
 	install -d $(BINDIR)
-	install -s -m 0750 -o $(USER) main $(BINDIR)/$(EXECUTABLE)
+	install -s -m 0750 -o $(USER) monitoreador $(BINDIR)/$(EXECUTABLE)
 
 build: all
 	docker build -t $(CONTAINER_TAG) .
@@ -24,4 +24,9 @@ uninstall:
 	rm -v $(BINDIR)/$(EXECUTABLE)
 
 clean:
-	rm -v main
+	-rm -v $(EXECUTABLE)
+
+strip:
+	strip -v $(EXECUTABLE)
+
+dist: clean main strip build push
