@@ -43,20 +43,28 @@ func ConsulServices() (ms []Metric) {
         log.Fatal(err)
     }
 
-    checks,_ := client.Agent().Checks()
-    for _, c := range checks {
-        var m Metric
+    checks,_,_ := client.Catalog().Services(nil)
+    for c,_ := range checks {
+        services,_,_ := client.Health().Service(c, "", false, nil)
 
-        m.Id = fmt.Sprintf("consul-service-%s", c.CheckID)
-        m.Name = "Consul"
-        m.BusinessImpact = "The cluster probably wont do stuff"
-        m.Severity = 1
-        m.PanicGuide = panicGuide
-        m.Ok = c.Status == "passing"
-        m.CheckOutput = c.Output
-        m.LastUpdated = now()
+        for _,s := range services {
+            if s.Node.Node == checkNodeName {
+                var m Metric
 
-        ms = append(ms, m)
+                name := fmt.Sprintf("consul-service-%s-%s", c, s.Checks[0].CheckID)
+
+                m.Id = name
+                m.Name = name
+                m.BusinessImpact = "The cluster probably wont do stuff"
+                m.Severity = 1
+                m.PanicGuide = panicGuide
+                m.Ok = s.Checks[0].Status == "passing"
+                m.CheckOutput = s.Checks[0].Output
+                m.LastUpdated = now()
+
+                ms = append(ms, m)
+            }
+        }
     }
 
     return
