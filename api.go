@@ -11,13 +11,25 @@ func BuildHealthcheck(w http.ResponseWriter, r *http.Request){
     LogRequest(r)
 
     var metrics []Metric
-    metrics = append(metrics, LoadAvg())
-    metrics = append(metrics, Memory())
-    metrics = append(metrics, DiskUsage())
-    metrics = append(metrics, ConsulNode())
 
-    for _,s := range ConsulServices() {
-        metrics = append(metrics, s)
+    if checks.shouldBuild("loadavg") {
+        metrics = append(metrics, LoadAvg())
+    }
+
+    if checks.shouldBuild("memory") {
+        metrics = append(metrics, Memory())
+    }
+
+    if checks.shouldBuild("disk") {
+        metrics = append(metrics, DiskUsage())
+    }
+
+    if checks.shouldBuild("consul") {
+        metrics = append(metrics, ConsulNode())
+
+        for _,s := range ConsulServices() {
+            metrics = append(metrics, s)
+        }
     }
 
     healthcheck.Checks = metrics
@@ -36,4 +48,16 @@ func LogRequest(r *http.Request) {
         r.RemoteAddr,
         r.Method,
         r.URL.Path)
+}
+
+func (c Checks) shouldBuild(checkName string) (bool) {
+    if c.List[0] == "all" {
+        return true
+    }
+
+    for _,v := range c.List {
+        if v == checkName { return true }
+    }
+
+    return false
 }

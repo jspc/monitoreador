@@ -6,6 +6,7 @@ import (
     "net/http"
     "os"
     "os/signal"
+    "strings"
     "syscall"
 )
 
@@ -27,6 +28,11 @@ type Metric struct {
     CheckOutput string    `json:"checkOutput"`
     LastUpdated string    `json:"lastUpdated"`
 }
+
+type Checks struct {
+    List []string
+}
+var checks Checks
 
 var config string
 var err error
@@ -58,13 +64,17 @@ func LoadConfig(){
 }
 
 func main(){
+    var checksString = flag.String("checks", "all", "comma separated list of checks")
     flag.Parse()
+
+    checks.List = strings.Split(*checksString, ",")
     hostname, err = os.Hostname()
     if err != nil {
         log.Fatalf("Could not get hostname: %s", err)
     }
 
     log.Printf( "Starting logging on %s\n", hostname )
+    log.Printf( "Returning checks for %s\n", checks.List )
 
     LoadConfig()
 
